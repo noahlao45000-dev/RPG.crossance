@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>RPG CROISSANCE V15</title>
+    <style>
+        :root { 
+            --neon: #00e5ff; --danger: #ff3d00; --success: #00e676; 
+            --gold: #ffea00; --bg: #050505; --card: #151515; --love: #ff4081;
+        }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; overflow: hidden; }
+        
+        .app-header { background: #1a1a1a; padding: 10px; text-align: center; border-bottom: 2px solid #333; }
+        .xp-wrapper { position: relative; width: 90%; height: 25px; margin: 8px auto; background: #222; border-radius: 8px; border: 2px solid #444; overflow: hidden; }
+        #xp-bar { height: 100%; width: 0%; background: linear-gradient(90deg, var(--love), var(--neon)); transition: width 0.8s; }
+        #xp-text { position: absolute; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; font-size: 0.8rem; font-weight: 900; z-index: 3; }
+
+        #viewport { display: flex; width: 900vw; height: calc(100vh - 150px); transition: transform 0.4s cubic-bezier(0.1, 0.7, 0.1, 1); }
+        .page { width: 100vw; height: 100%; overflow-y: auto; padding: 15px; box-sizing: border-box; }
+
+        .bottom-nav { position: fixed; bottom: 0; width: 100%; background: #111; display: flex; justify-content: space-around; padding: 10px 0; border-top: 2px solid #333; z-index: 100; padding-bottom: env(safe-area-inset-bottom); }
+        .nav-item { background: none; border: none; color: #444; font-size: 1.2rem; }
+        .nav-item.active { color: var(--neon); transform: scale(1.1); }
+
+        .card { background: var(--card); border-radius: 12px; padding: 12px; margin-bottom: 15px; border: 1px solid #252525; }
+        .btn-check { background: #1a1a1a; border: 2px solid #333; color: white; width: 45px; height: 45px; border-radius: 10px; font-size: 1.2rem; }
+        .active-blue { background: #0072ff !important; border-color: #00c6ff !important; box-shadow: 0 0 10px #00c6ff; }
+        .active-green { background: #00a82d !important; border-color: #00ff41 !important; box-shadow: 0 0 10px #00ff41; }
+        .active-love { background: var(--love) !important; border-color: #ff80ab !important; box-shadow: 0 0 10px var(--love); }
+
+        table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+        th, td { border: 1px solid #333; padding: 8px; text-align: center; }
+    </style>
+</head>
+<body>
+
+    <div class="app-header">
+        <div id="user-rank" style="color: var(--gold); font-size: 0.7rem; font-weight: bold;">CHARGEMENT...</div>
+        <div class="xp-wrapper">
+            <div id="xp-bar"></div>
+            <div id="xp-text">LVL <span id="lvl-num">1</span> • <span id="xp-pc">0</span>%</div>
+        </div>
+    </div>
+
+    <div id="viewport">
+        <div class="page">
+            <h3>⚔️ Discipline Matinale</h3>
+            <div id="week-list"></div>
+        </div>
+
+        <div class="page">
+            <h3>📊 Mes Compétences</h3>
+            <div class="card">💪 FORCE PHYSIQUE : <b id="stat-force" style="color:var(--success)">0</b></div>
+            <div class="card">🧠 DISCIPLINE MENTALE : <b id="stat-recup" style="color:var(--neon)">0</b></div>
+            
+            <h3>📅 Archives Mensuelles</h3>
+            <div class="card">
+                <table id="monthly-table">
+                    <tr><th>Mois</th><th>Niveau</th><th>Force</th></tr>
+                </table>
+                <p style="font-size: 0.7rem; color: #888; text-align: center; margin-top: 10px;">Enregistrement automatique activé ✓</p>
+            </div>
+        </div>
+
+        <div class="page"><h3>🏋️ Programme PPL</h3><div class="card"><table><tr><th>Jeu</th><th>Séance</th></tr><tr><td>Lun/Jeu</td><td>PUSH</td></tr><tr><td>Mar/Sam</td><td>PULL</td></tr><tr><td>Mer/Dim</td><td>LEGS</td></tr></table><textarea id="zoneNotes" style="width:100%; height:50px; background:#000; color:var(--success); margin-top:10px; border:1px solid #444;" placeholder="Records de poids..."></textarea></div></div>
+
+        <div class="page"><h3>🎯 Objectifs</h3><div class="card"><input type="text" id="goal-input" style="width:100%; padding:10px; background:#000; color:white; border:1px solid #444;" placeholder="Défi du jour..."><button onclick="validerGoal()" style="width:100%; background:var(--gold); margin-top:10px; padding:10px; border-radius:8px; border:none; font-weight:bold;">+50 XP</button></div></div>
+
+        <div class="page"><h3>📜 Journal</h3><div id="epic-history" class="card"></div></div>
+
+        <div class="page"><h3>📅 Agenda</h3><div class="card"><textarea id="delay-note" style="width:100%; height:80px; background:#000; color:white; border:1px solid #444;"></textarea></div></div>
+
+        <div class="page"><h3>🌙 Sommeil</h3><div class="card" style="text-align:center;"><p>Validation rapide sur la page d'accueil.</p></div></div>
+
+        <div class="page" style="text-align: center;">
+            <h3 style="color:var(--love)">❤️ Mon Énergie</h3>
+            <div class="card" style="border: 1px solid var(--love);">
+                <h1>Je t'aime Aurore</h1>
+                <p style="font-size:0.8rem;">Les messages cochés en page d'accueil s'ajoutent ici.</p>
+            </div>
+            <div id="love-history" class="card" style="text-align:left; font-size:0.8rem;"></div>
+        </div>
+
+        <div class="page"><h3>👤 Système</h3><button onclick="confirmReset()" style="color:var(--danger); background:none; border:1px solid var(--danger); padding:10px; width:100%; border-radius:10px;">RESET</button></div>
+    </div>
+
+    <nav class="bottom-nav">
+        <div class="nav-item active" onclick="jump(0)">🏠</div>
+        <div class="nav-item" onclick="jump(1)">📊</div>
+        <div class="nav-item" onclick="jump(2)">🏋️</div>
+        <div class="nav-item" onclick="jump(3)">🎯</div>
+        <div class="nav-item" onclick="jump(4)">📜</div>
+        <div class="nav-item" onclick="jump(5)">📅</div>
+        <div class="nav-item" onclick="jump(6)">🌙</div>
+        <div class="nav-item" onclick="jump(7)">❤️</div>
+        <div class="nav-item" onclick="jump(8)">👤</div>
+    </nav>
+
+<script>
+    let db = JSON.parse(localStorage.getItem('rpg_v15')) || { 
+        xp: 0, lvl: 1, sport: 0, checks: Array(15).fill(false),
+        history: [], loveMessages: [], archives: [], lastMonthSaved: ""
+    };
+
+    function jump(idx) {
+        document.getElementById('viewport').style.transform = `translateX(-${idx * 100}vw)`;
+        document.querySelectorAll('.nav-item').forEach((item, i) => { item.classList.toggle('active', i === idx); });
+    }
+
+    // --- AUTO-ARCHIVE ---
+    function checkAutoArchive() {
+        const monthNames = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Aoû", "Sep", "Oct", "Nov", "Déc"];
+        const currentMonth = monthNames[new Date().getMonth()];
+        
+        if (db.lastMonthSaved !== currentMonth && db.lastMonthSaved !== "") {
+            db.archives.push({ name: db.lastMonthSaved, lvl: db.lvl, force: db.sport * 15 });
+            db.lastMonthSaved = currentMonth;
+            save();
+        } else if (db.lastMonthSaved === "") {
+            db.lastMonthSaved = currentMonth;
+            save();
+        }
+    }
+
+    function updateUI() {
+        if(db.xp >= 100) { db.lvl++; db.xp -= 100; alert("Niveau Supérieur !"); }
+        if(db.xp < 0) db.xp = 0;
+        document.getElementById('xp-bar').style.width = db.xp + "%";
+        document.getElementById('xp-pc').innerText = db.xp;
+        document.getElementById('lvl-num').innerText = db.lvl;
+        document.getElementById('stat-force').innerText = (db.sport * 15) + " KG PROG";
+        document.getElementById('stat-recup').innerText = (db.lvl * 20) + " DISCIPLINE";
+        
+        let table = document.getElementById('monthly-table');
+        table.innerHTML = `<tr><th>Mois</th><th>Niveau</th><th>Force</th></tr>`;
+        db.archives.forEach(a => {
+            table.innerHTML += `<tr><td>${a.name}</td><td>${a.lvl}</td><td>${a.force}</td></tr>`;
+        });
+
+        document.getElementById('love-history').innerHTML = db.loveMessages.slice(0, 5).map(m => `<div>💌 ${m}</div>`).join('');
+    }
+
+    function check(idx, type) {
+        db.checks[idx] = !db.checks[idx];
+        let val = (type === 'love') ? 5 : 20;
+        db.xp += db.checks[idx] ? val : -val;
+        
+        if(type === 'sport') db.sport += db.checks[idx] ? 1 : -1;
+        if(type === 'love' && db.checks[idx]) {
+            let msg = "Attention portée à Aurore (" + new Date().toLocaleDateString() + ")";
+            db.loveMessages.unshift(msg);
+        }
+        save(); updateUI(); initWeek();
+    }
+
+    function save() { localStorage.setItem('rpg_v15', JSON.stringify(db)); }
+    function validerGoal() { db.xp += 50; save(); updateUI(); alert("Objectif validé !"); }
+
+    function initWeek() {
+        const list = document.getElementById('week-list');
+        const days = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi"];
+        list.innerHTML = "";
+        days.forEach((d, i) => {
+            list.innerHTML += `<div class="card" style="display:flex; justify-content:space-between; align-items:center;">
+                <b>${d}</b>
+                <div style="display:flex; gap:5px;">
+                    <button class="btn-check ${db.checks[i*3] ? 'active-love' : ''}" onclick="check(${i*3}, 'love')">❤️</button>
+                    <button class="btn-check ${db.checks[i*3+1] ? 'active-blue' : ''}" onclick="check(${i*3+1}, 'sleep')">🌙</button>
+                    <button class="btn-check ${db.checks[i*3+2] ? 'active-green' : ''}" onclick="check(${i*3+2}, 'sport')">💪</button>
+                </div>
+            </div>`;
+        });
+    }
+
+    function confirmReset() { if(confirm("Voulez-vous réinitialiser ?")) { localStorage.clear(); location.reload(); } }
+
+    checkAutoArchive();
+    initWeek(); 
+    updateUI();
+</script>
+</body>
+</html>
