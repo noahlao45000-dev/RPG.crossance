@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RPG CROISSANCE V16</title>
+    <title>RPG CROISSANCE V18</title>
     <style>
         :root {
             --primary: #00d2ff;
@@ -19,182 +19,161 @@
             background-color: var(--bg);
             color: var(--text);
             margin: 0;
-            padding: 20px;
+            padding: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
+            overflow-x: hidden; /* Empêche le défilement horizontal du body */
         }
 
-        /* BARRE D'XP INTERACTIVE */
-        .header {
+        /* HEADER FIXE */
+        .top-container {
             width: 100%;
             max-width: 400px;
+            padding: 20px;
+            box-sizing: border-box;
+            position: sticky;
+            top: 0;
+            background: var(--bg);
+            z-index: 10;
+        }
+
+        .header-stats {
             background: var(--card);
             padding: 15px;
             border-radius: 15px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            cursor: pointer; /* Montre que c'est cliquable */
-            transition: transform 0.2s, background 0.2s;
-        }
-
-        .header:active {
-            transform: scale(0.98);
-            background: #2d3748;
-        }
-
-        .level-info {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-            font-weight: bold;
-            font-size: 1.1em;
-        }
-
-        .xp-bar-container {
-            width: 100%;
-            height: 12px;
-            background: #334155;
-            border-radius: 6px;
-            overflow: hidden;
-        }
-
-        .xp-bar-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--primary), var(--secondary));
-            width: 0%;
-            transition: width 0.5s ease-out;
-        }
-
-        /* NAVIGATION */
-        .nav-tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .tab-btn {
-            background: var(--card);
-            color: white;
-            border: 2px solid transparent;
-            padding: 10px 20px;
-            border-radius: 10px;
             cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            transition: transform 0.1s;
         }
 
-        .tab-btn.active {
-            border-color: var(--primary);
-            background: var(--secondary);
+        .header-stats:active { transform: scale(0.96); }
+
+        .level-info { display: flex; justify-content: space-between; margin-bottom: 10px; font-weight: bold; }
+        
+        .xp-bar-container { width: 100%; height: 12px; background: #334155; border-radius: 6px; overflow: hidden; }
+        
+        .xp-bar-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--secondary)); width: 0%; transition: width 0.5s; }
+
+        /* NAVIGATION TABS */
+        .nav-tabs { display: flex; gap: 10px; margin: 10px 0; justify-content: center; }
+        
+        .tab-btn {
+            background: var(--card); color: white; border: 2px solid transparent;
+            padding: 8px 16px; border-radius: 10px; cursor: pointer; font-weight: bold; transition: 0.3s;
         }
 
-        .page { display: none; width: 100%; max-width: 400px; }
-        .page.active { display: block; animation: fadeIn 0.3s; }
+        .tab-btn.active { border-color: var(--primary); background: var(--secondary); }
 
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-        /* CARTES D'ACTION */
-        .action-card {
-            background: var(--card);
-            padding: 20px;
-            border-radius: 15px;
-            margin-bottom: 15px;
+        /* SYSTEME DE SLIDE (SWIPE) */
+        .main-slider {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-left: 5px solid var(--primary);
+            width: 200%; /* Deux pages côte à côte */
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            flex: 1;
         }
 
-        .action-card.completed {
-            border-left-color: #10b981;
-            opacity: 0.7;
+        .page {
+            width: 50%; /* Chaque page prend la moitié du slider (donc 100% de l'écran) */
+            padding: 0 20px 20px 20px;
+            box-sizing: border-box;
         }
+
+        /* CARTES ET TABLEAU (STYLE V15) */
+        .action-card {
+            background: var(--card); padding: 20px; border-radius: 15px;
+            margin-bottom: 15px; display: flex; justify-content: space-between;
+            align-items: center; border-left: 5px solid var(--primary);
+        }
+
+        .action-card.completed { border-left-color: #10b981; opacity: 0.6; }
 
         .btn-check {
-            background: var(--primary);
-            border: none;
-            color: white;
-            padding: 10px 15px;
-            border-radius: 8px;
-            font-weight: bold;
+            background: var(--primary); border: none; color: white;
+            padding: 10px 15px; border-radius: 8px; font-weight: bold;
         }
 
         .btn-check:disabled { background: #475569; }
 
-        /* STATS TABLE */
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #334155; }
+        table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 10px; overflow: hidden; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #334155; }
         th { color: var(--accent); }
 
     </style>
 </head>
 <body>
 
-    <div class="header" onclick="showPage('display')" title="Voir les stats">
-        <div class="level-info">
-            <span>NIVEAU <span id="lvl-display">1</span></span>
-            <span id="xp-text">0 / 100 XP</span>
+    <div class="top-container">
+        <div class="header-stats" onclick="goToPage(1)">
+            <div class="level-info">
+                <span>NIVEAU <span id="lvl-display">1</span></span>
+                <span id="xp-text">0 / 100 XP</span>
+            </div>
+            <div class="xp-bar-container">
+                <div id="xp-fill" class="xp-bar-fill"></div>
+            </div>
         </div>
-        <div class="xp-bar-container">
-            <div id="xp-fill" class="xp-bar-fill"></div>
-        </div>
-        <div style="text-align: center; font-size: 0.7em; margin-top: 5px; color: var(--primary);">
-            👆 Clique pour voir ton historique
+
+        <div class="nav-tabs">
+            <button class="tab-btn active" onclick="goToPage(0)" id="btn-0">QUÊTES</button>
+            <button class="tab-btn" onclick="goToPage(1)" id="btn-1">DISPLAY</button>
         </div>
     </div>
 
-    <div class="nav-tabs">
-        <button class="tab-btn active" onclick="showPage('quests')" id="btn-quests">QUÊTES</button>
-        <button class="tab-btn" onclick="showPage('display')" id="btn-display">DISPLAY</button>
-    </div>
+    <div class="main-slider" id="slider">
+        
+        <div class="page">
+            <div class="action-card" id="card-aurore">
+                <div>❤️ <strong>Aurore</strong><br><small>Discipline & Attention</small></div>
+                <button class="btn-check" onclick="completeAction('aurore')">+15 XP</button>
+            </div>
+            <div class="action-card" id="card-sommeil">
+                <div>🌙 <strong>Sommeil</strong><br><small>Récupération</small></div>
+                <button class="btn-check" onclick="completeAction('sommeil')">+10 XP</button>
+            </div>
+            <div class="action-card" id="card-muscu">
+                <div>💪 <strong>Muscu</strong><br><small>Séance PPL</small></div>
+                <button class="btn-check" onclick="completeAction('muscu')">+25 XP</button>
+            </div>
+        </div>
 
-    <div id="quests" class="page active">
-        <div class="action-card" id="card-aurore">
-            <div>❤️ <strong>Mission Aurore</strong><br><small>Discipline du cœur</small></div>
-            <button class="btn-check" onclick="completeAction('aurore')">+15 XP</button>
+        <div class="page">
+            <table>
+                <thead>
+                    <tr><th>Date</th><th>❤️</th><th>🌙</th><th>💪</th></tr>
+                </thead>
+                <tbody id="history-body"></tbody>
+            </table>
         </div>
-        <div class="action-card" id="card-sommeil">
-            <div>🌙 <strong>Repos Guerrier</strong><br><small>Sommeil & Routine</small></div>
-            <button class="btn-check" onclick="completeAction('sommeil')">+10 XP</button>
-        </div>
-        <div class="action-card" id="card-muscu">
-            <div>💪 <strong>Forge Physique</strong><br><small>Séance PPL terminée</small></div>
-            <button class="btn-check" onclick="completeAction('muscu')">+25 XP</button>
-        </div>
-    </div>
-
-    <div id="display" class="page">
-        <div class="action-card" style="border-left-color: var(--accent);">
-            <div><strong>Historique des 7 derniers jours</strong></div>
-        </div>
-        <table id="stats-table">
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>❤️</th>
-                    <th>🌙</th>
-                    <th>💪</th>
-                </tr>
-            </thead>
-            <tbody id="history-body"></tbody>
-        </table>
-        <button onclick="resetData()" style="margin-top: 20px; background: none; border: 1px solid red; color: red; padding: 5px; border-radius: 5px; cursor: pointer; width: 100%;">Réinitialiser tout</button>
     </div>
 
     <script>
-        let state = JSON.parse(localStorage.getItem('rpg_data')) || {
-            xp: 0,
-            level: 1,
-            history: {},
-            lastCheck: ""
-        };
+        let state = JSON.parse(localStorage.getItem('rpg_growth_v18')) || { xp: 0, level: 1, history: {} };
+        let currentPage = 0;
 
-        function showPage(pageId) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(pageId).classList.add('active');
-            document.getElementById('btn-' + pageId).classList.add('active');
-            if(pageId === 'display') updateTable();
+        // GESTION DU SWIPE
+        let touchstartX = 0;
+        let touchendX = 0;
+
+        document.addEventListener('touchstart', e => { touchstartX = e.changedTouches[0].screenX; });
+        document.addEventListener('touchend', e => { 
+            touchendX = e.changedTouches[0].screenX;
+            handleGesture();
+        });
+
+        function handleGesture() {
+            if (touchendX < touchstartX - 50) goToPage(1); // Swipe vers la gauche -> Page suivante
+            if (touchendX > touchstartX + 50) goToPage(0); // Swipe vers la droite -> Page précédente
+        }
+
+        function goToPage(index) {
+            currentPage = index;
+            document.getElementById('slider').style.transform = `translateX(-${index * 50}%)`;
+            document.querySelectorAll('.tab-btn').forEach((btn, i) => {
+                btn.classList.toggle('active', i === index);
+            });
+            if(index === 1) updateTable();
         }
 
         function updateUI() {
@@ -210,7 +189,7 @@
             toggleCard('sommeil', doneToday.sommeil);
             toggleCard('muscu', doneToday.muscu);
             
-            localStorage.setItem('rpg_data', JSON.stringify(state));
+            localStorage.setItem('rpg_growth_v18', JSON.stringify(state));
         }
 
         function toggleCard(id, done) {
@@ -230,16 +209,14 @@
         function completeAction(type) {
             const today = new Date().toLocaleDateString();
             if(!state.history[today]) state.history[today] = { aurore: false, sommeil: false, muscu: false };
-            
             if(!state.history[today][type]) {
                 state.history[today][type] = true;
                 const gains = { aurore: 15, sommeil: 10, muscu: 25 };
                 state.xp += gains[type];
-                
                 if(state.xp >= state.level * 100) {
                     state.xp -= state.level * 100;
                     state.level++;
-                    alert("NIVEAU SUPÉRIEUR ! 🏆 Tu deviens plus fort.");
+                    alert("LEVEL UP ! 🎉");
                 }
                 updateUI();
             }
@@ -249,25 +226,10 @@
             const body = document.getElementById('history-body');
             body.innerHTML = "";
             const dates = Object.keys(state.history).sort().reverse().slice(0, 7);
-            
             dates.forEach(date => {
                 const day = state.history[date];
-                body.innerHTML += `
-                    <tr>
-                        <td>${date}</td>
-                        <td>${day.aurore ? '✅' : '❌'}</td>
-                        <td>${day.sommeil ? '✅' : '❌'}</td>
-                        <td>${day.muscu ? '✅' : '❌'}</td>
-                    </tr>
-                `;
+                body.innerHTML += `<tr><td>${date}</td><td>${day.aurore?'✅':'❌'}</td><td>${day.sommeil?'✅':'❌'}</td><td>${day.muscu?'✅':'❌'}</td></tr>`;
             });
-        }
-
-        function resetData() {
-            if(confirm("Voulez-vous vraiment effacer votre progression ?")) {
-                localStorage.clear();
-                location.reload();
-            }
         }
 
         updateUI();
